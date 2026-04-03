@@ -2,9 +2,11 @@ import type { CheckIn } from "@/types/check-in";
 
 type CheckInListProps = {
   checkIns: CheckIn[];
+  onEdit: (checkIn: CheckIn) => void;
+  onDelete: (checkIn: CheckIn) => Promise<void>;
 };
 
-export function CheckInList({ checkIns }: CheckInListProps) {
+export function CheckInList({ checkIns, onEdit, onDelete }: CheckInListProps) {
   if (!checkIns.length) {
     return (
       <div className="rounded-xl border border-[#3a3a3a] bg-[#222] p-6 text-[#b8b1a8]">
@@ -35,6 +37,22 @@ export function CheckInList({ checkIns }: CheckInListProps) {
           </div>
 
           {item.notes ? <p className="mt-4 text-sm text-[#b8b1a8]">{item.notes}</p> : null}
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit(item)}
+              className="rounded-md border border-[#555] px-3 py-1.5 text-xs uppercase tracking-wider text-[#f0ece4] hover:border-[#c84b2f]"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(item)}
+              className="rounded-md border border-red-800 px-3 py-1.5 text-xs uppercase tracking-wider text-red-300 hover:bg-red-950/40"
+            >
+              Delete
+            </button>
+          </div>
         </article>
       ))}
     </section>

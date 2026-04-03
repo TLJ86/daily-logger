@@ -6,6 +6,9 @@ import type { CheckInInsert } from "@/types/check-in";
 type CheckInFormProps = {
   onSubmitCheckIn: (payload: CheckInInsert) => Promise<void>;
   isSubmitting: boolean;
+  initialValues?: Partial<CheckInDraft>;
+  submitLabel?: string;
+  onCancel?: () => void;
 };
 
 type CheckInDraft = Omit<CheckInInsert, "user_id">;
@@ -26,8 +29,17 @@ const initialDraft: CheckInDraft = {
   notes: "",
 };
 
-export function CheckInForm({ onSubmitCheckIn, isSubmitting }: CheckInFormProps) {
-  const [draft, setDraft] = useState<CheckInDraft>(initialDraft);
+export function CheckInForm({
+  onSubmitCheckIn,
+  isSubmitting,
+  initialValues,
+  submitLabel = "Save Daily Check-In",
+  onCancel,
+}: CheckInFormProps) {
+  const [draft, setDraft] = useState<CheckInDraft>({
+    ...initialDraft,
+    ...initialValues,
+  });
 
   function setField<K extends keyof CheckInDraft>(key: K, value: CheckInDraft[K]) {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -39,7 +51,9 @@ export function CheckInForm({ onSubmitCheckIn, isSubmitting }: CheckInFormProps)
       ...draft,
       notes: draft.notes?.trim() || null,
     });
-    setDraft((prev) => ({ ...initialDraft, check_in_date: prev.check_in_date }));
+    if (!initialValues) {
+      setDraft((prev) => ({ ...initialDraft, check_in_date: prev.check_in_date }));
+    }
   }
 
   return (
@@ -139,8 +153,17 @@ export function CheckInForm({ onSubmitCheckIn, isSubmitting }: CheckInFormProps)
         disabled={isSubmitting}
         className="w-full rounded-md bg-[#c84b2f] px-4 py-3 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-[#a33a21] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Saving..." : "Save Daily Check-In"}
+        {isSubmitting ? "Saving..." : submitLabel}
       </button>
+      {onCancel ? (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full rounded-md border border-[#555] px-4 py-3 text-sm text-[#f0ece4] transition hover:border-[#c84b2f]"
+        >
+          Cancel
+        </button>
+      ) : null}
     </form>
   );
 }

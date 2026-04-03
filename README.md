@@ -9,11 +9,13 @@ A simple daily check-in web app built with:
 
 ## Features
 
-- Email login with Supabase magic link
+- Email + password auth with Supabase
 - Protected dashboard for signed-in users
 - One daily check-in per date
 - Save entries to Supabase `check_ins` table
 - View previous check-ins under the form
+- Edit/delete check-ins
+- Basic trend charts (weight, mood, energy)
 
 ## 1) Environment Variables
 
@@ -26,12 +28,13 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 ## 2) Supabase Setup
 
-### Enable email auth
+### Enable email + password auth
 
 In Supabase Dashboard:
 
 - Go to `Authentication` -> `Providers` -> `Email`
-- Enable email sign-ins (magic link flow is used in this app)
+- Enable email sign-ins
+- For easiest setup, disable "Confirm email" while building locally (optional)
 
 ### Create table
 
@@ -63,6 +66,15 @@ using (auth.uid() = user_id);
 create policy "Users can insert own check-ins"
 on public.check_ins for insert
 with check (auth.uid() = user_id);
+
+create policy "Users can update own check-ins"
+on public.check_ins for update
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy "Users can delete own check-ins"
+on public.check_ins for delete
+using (auth.uid() = user_id);
 ```
 
 ## 3) Run locally
