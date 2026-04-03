@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Daily Logger
 
-## Getting Started
+A simple daily check-in web app built with:
 
-First, run the development server:
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (Auth + Database)
+
+## Features
+
+- Email login with Supabase magic link
+- Protected dashboard for signed-in users
+- One daily check-in per date
+- Save entries to Supabase `check_ins` table
+- View previous check-ins under the form
+
+## 1) Environment Variables
+
+Create `/.env.local` in the project root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 2) Supabase Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Enable email auth
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+In Supabase Dashboard:
 
-## Learn More
+- Go to `Authentication` -> `Providers` -> `Email`
+- Enable email sign-ins (magic link flow is used in this app)
 
-To learn more about Next.js, take a look at the following resources:
+### Create table
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run this SQL in Supabase SQL Editor:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+create table if not exists public.check_ins (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  check_in_date date not null,
+  weight numeric not null,
+  training_done boolean not null default false,
+  protein_hit boolean not null default false,
+  creatine_hit boolean not null default false,
+  steps integer not null default 0,
+  mood integer not null check (mood between 1 and 10),
+  energy integer not null check (energy between 1 and 10),
+  notes text,
+  created_at timestamptz not null default now(),
+  unique (user_id, check_in_date)
+);
 
-## Deploy on Vercel
+alter table public.check_ins enable row level security;
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+create policy "Users can read own check-ins"
+on public.check_ins for select
+using (auth.uid() = user_id);
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+create policy "Users can insert own check-ins"
+on public.check_ins for insert
+with check (auth.uid() = user_id);
+```
+
+## 3) Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000).
